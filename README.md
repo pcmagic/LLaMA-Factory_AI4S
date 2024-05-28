@@ -19,6 +19,9 @@
 
 \[ English | [中文](README_zh.md) \]
 
+This is a fork from official version https://github.com/hiyouga/LLaMA-Factory. 
+
+
 **Fine-tuning a large language model can be easy as...**
 
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/9840a653-7e9c-41c8-ae89-7ace5698baf6
@@ -30,6 +33,7 @@ Choose your path:
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Features](#features)
 - [Benchmark](#benchmark)
 - [Changelog](#changelog)
@@ -37,11 +41,23 @@ Choose your path:
 - [Supported Training Approaches](#supported-training-approaches)
 - [Provided Datasets](#provided-datasets)
 - [Requirement](#requirement)
+  - [Hardware Requirement](#hardware-requirement)
 - [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Data Preparation](#data-preparation)
+  - [Quickstart](#quickstart)
+  - [Fine-Tuning with LLaMA Board GUI (powered by Gradio)](#fine-tuning-with-llama-board-gui-powered-by-gradio)
+    - [Use local environment](#use-local-environment)
+    - [Use Docker](#use-docker)
+    - [Use Docker Compose](#use-docker-compose)
+  - [Deploy with OpenAI-style API and vLLM](#deploy-with-openai-style-api-and-vllm)
+  - [Download from ModelScope Hub](#download-from-modelscope-hub)
+  - [Use W\&B Logging](#use-wb-logging)
 - [Projects using LLaMA Factory](#projects-using-llama-factory)
 - [License](#license)
 - [Citation](#citation)
 - [Acknowledgement](#acknowledgement)
+- [Star History](#star-history)
 
 ## Features
 

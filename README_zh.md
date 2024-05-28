@@ -19,6 +19,8 @@
 
 \[ [English](README.md) | 中文 \]
 
+该项目分叉自 https://github.com/hiyouga/LLaMA-Factory
+
 **微调大模型可以像这样轻松…**
 
 https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd-d76c6d0a6594
@@ -30,6 +32,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 
 ## 目录
 
+- [目录](#目录)
 - [项目特色](#项目特色)
 - [性能指标](#性能指标)
 - [更新日志](#更新日志)
@@ -37,11 +40,23 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 - [训练方法](#训练方法)
 - [数据集](#数据集)
 - [软硬件依赖](#软硬件依赖)
+  - [硬件依赖](#硬件依赖)
 - [如何使用](#如何使用)
+  - [安装 LLaMA Factory](#安装-llama-factory)
+  - [数据准备](#数据准备)
+  - [快速开始](#快速开始)
+  - [LLaMA Board 可视化微调（由 Gradio 驱动）](#llama-board-可视化微调由-gradio-驱动)
+    - [使用本地环境](#使用本地环境)
+    - [使用 Docker](#使用-docker)
+    - [使用 Docker Compose](#使用-docker-compose)
+  - [利用 vLLM 部署 OpenAI API](#利用-vllm-部署-openai-api)
+  - [从魔搭社区下载](#从魔搭社区下载)
+  - [使用 W\&B 面板](#使用-wb-面板)
 - [使用了 LLaMA Factory 的项目](#使用了-llama-factory-的项目)
 - [协议](#协议)
 - [引用](#引用)
 - [致谢](#致谢)
+- [Star History](#star-history)
 
 ## 项目特色
 
