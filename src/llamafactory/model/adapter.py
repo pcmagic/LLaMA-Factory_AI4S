@@ -64,6 +64,7 @@ def init_adapter(
             if not any(forbidden_module in name for forbidden_module in forbidden_modules):
                 if cast_trainable_params_to_fp32:
                     param.data = param.data.to(torch.float32)
+                param.requires_grad_(True)
             else:
                 param.requires_grad_(False)
 
@@ -246,4 +247,61 @@ def init_adapter(
         if model_args.adapter_name_or_path is not None:
             logger.info("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
 
+    #############################
+    if finetuning_args.finetuning_type == "model_lora":
+        logger.info(f"Pretraining method: {finetuning_args.finetuning_type}")
+        adapter_to_resume = None
+        if model_args.adapter_name_or_path is not None:
+            is_mergeable = True
+            if getattr(model, "quantization_method", None):  # merge lora in quantized model is unstable
+                assert len(model_args.adapter_name_or_path) == 1, "Quantized model only accepts a single adapter."
+                is_mergeable = False
+
+            if is_deepspeed_zero3_enabled():
+                assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
+                is_mergeable = False
+
+            if model_args.use_unsloth:
+                assert len(model_args.adapter_name_or_path) == 1, "Unsloth model only accepts a single adapter."
+                is_mergeable = False
+
+            # if (is_trainable and not finetuning_args.create_new_adapter) or (not is_mergeable):
+            #     adapter_to_merge = model_args.adapter_name_or_path[:-1]
+            #     adapter_to_resume = model_args.adapter_name_or_path[-1]
+            # else:
+            adapter_to_merge = model_args.adapter_name_or_path
+            adapter_to_resume = model_args.adapter_name_or_path
+
+            for adapter in adapter_to_merge:
+                model: "LoraModel" = PeftModel.from_pretrained(
+                    model, adapter, offload_folder=model_args.offload_folder
+                )
+                model = model.merge_and_unload()
+
+            if len(adapter_to_merge) > 0:
+                logger.info("Merged {} adapter(s).".format(len(adapter_to_merge)))
+
+            if adapter_to_resume is not None:  # resume lora training
+                if model_args.use_unsloth:
+                    model = load_unsloth_peft_model(config, model_args, is_trainable=is_trainable)
+                else:
+                    model = PeftModel.from_pretrained(
+                        model,
+                        adapter_to_resume[0],
+                        is_trainable=is_trainable,
+                        offload_folder=model_args.offload_folder,
+                    )
+
+                    for idx, adapter in enumerate(adapter_to_resume[1:]):
+                        model.load_adapter(adapter, str(idx+1))
+
+        for name, param in model.named_parameters():
+            param.requires_grad_(True)
+
+        if cast_trainable_params_to_fp32:
+            for param in filter(lambda p: p.requires_grad, model.parameters()):
+                param.data = param.data.to(torch.float32)
+
+        if model_args.adapter_name_or_path is not None:
+            logger.info("Loaded adapter(s): {}".format(",".join(model_args.adapter_name_or_path)))
     return model

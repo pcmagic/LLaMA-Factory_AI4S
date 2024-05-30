@@ -62,6 +62,28 @@ def run_sft(
         **split_dataset(dataset, data_args, training_args),
     )
 
+    ######################################
+    ## check params is trainable or not ##
+    from prettytable import PrettyTable
+    def count_parameters(net):
+        table = PrettyTable(["Modules", "Parameters", "Trainable"])
+        total_params = 0
+        for name, parameter in net.named_parameters():
+            if not parameter.requires_grad:
+                tr = 'false'
+            else:
+                tr = 'true'
+            params = parameter.numel()
+            table.add_row([name, params, tr])
+            total_params += params
+        print(table)
+        print(f"Total Trainable Params: {total_params}")
+        return total_params
+
+    count_parameters(model)
+    raise
+    ######################################
+
     # Keyword arguments for `model.generate`
     gen_kwargs = generating_args.to_dict()
     gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids

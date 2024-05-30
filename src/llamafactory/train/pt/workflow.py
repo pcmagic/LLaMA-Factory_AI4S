@@ -42,6 +42,28 @@ def run_pt(
         **split_dataset(dataset, data_args, training_args),
     )
 
+    # #####################################
+    # # check params is trainable or not ##
+    # from prettytable import PrettyTable
+    # def count_parameters(net):
+    #     table = PrettyTable(["Modules", "Parameters", "Trainable"])
+    #     total_params = 0
+    #     for name, parameter in net.named_parameters():
+    #         if not parameter.requires_grad:
+    #             tr = 'false'
+    #         else:
+    #             tr = 'true'
+    #         params = parameter.numel()
+    #         table.add_row([name, params, tr])
+    #         total_params += params
+    #     print(table)
+    #     print(f"Total Trainable Params: {total_params}")
+    #     return total_params
+    #
+    # count_parameters(model)
+    # raise
+    # #####################################
+
     # Training
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)

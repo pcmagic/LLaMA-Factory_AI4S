@@ -5,10 +5,11 @@ from transformers import Trainer
 
 from ...extras.logging import get_logger
 from ..utils import create_custom_optimzer, create_custom_scheduler
-
+from collections import defaultdict
+import os
+import torch
 
 if TYPE_CHECKING:
-    import torch
     from transformers import ProcessorMixin
 
     from ...hparams import FinetuningArguments
@@ -44,8 +45,72 @@ class CustomTrainer(Trainer):
         create_custom_scheduler(self.args, num_training_steps, optimizer)
         return super().create_scheduler(num_training_steps, optimizer)
 
-    def _save(self, output_dir: Optional[str] = None, state_dict: Optional[Dict[str, "torch.Tensor"]] = None) -> None:
-        super()._save(output_dir, state_dict)
+    def save_model(self, output_dir: Optional[str] = None, _internal_call: bool = False):
         if self.processor is not None:
             output_dir = output_dir if output_dir is not None else self.args.output_dir
             getattr(self.processor, "image_processor").save_pretrained(output_dir)
+
+        # 改写trainer的save_model，在model_lora的时候分别保存model和lora权重
+        from transformers.trainer import TRAINING_ARGS_NAME
+        import safetensors.torch
+
+        output_dir = self.args.output_dir
+        os.makedirs(output_dir, exist_ok=True)
+
+        # torch.save(self.args, os.path.join(output_dir, TRAINING_ARGS_NAME))
+        #
+        # if self.tokenizer is not None:
+        #     self.tokenizer.save_pretrained(output_dir)
+
+        lora_dict= defaultdict(dict)
+        model_dict = {}
+        for k, v in self.model.named_parameters():
+            if 'lora' in k:
+                lora_dict[k.split('.')[-2]][k] = v
+            else:
+                model_dict[k] = v
+        if self.finetuning_args.finetuning_type == "model_lora":
+            os.makedirs(os.path.join(output_dir, 'model'), exist_ok=True)
+
+            if self.tokenizer is not None:
+                self.tokenizer.save_pretrained(os.path.join(output_dir, 'model'))
+            torch.save(self.args, os.path.join(output_dir, 'model', TRAINING_ARGS_NAME))
+
+            for k, v in lora_dict.items():
+                os.makedirs(os.path.join(output_dir, f'lora_{k}'), exist_ok=True)
+                if self.tokenizer is not None:
+                    self.tokenizer.save_pretrained(os.path.join(output_dir, f'lora_{k}'))
+                torch.save(self.args, os.path.join(output_dir, f'lora_{k}', TRAINING_ARGS_NAME))
+
+                safetensors.torch.save_file(
+                        v, os.path.join(output_dir, f'lora_{k}', f"adapter_model.safetensors"), metadata={"format": "pt"}
+                    )
+            safetensors.torch.save_file(
+                    model_dict, os.path.join(output_dir, 'model', "model.safetensors"), metadata={"format": "pt"}
+                )
+            # self.model.save_pretrained(
+            #      os.path.join(output_dir, 'model'), state_dict=model_dict, safe_serialization=self.args.save_safetensors
+            # )
+        elif self.finetuning_args.finetuning_type == "lora":
+            # for k, v in lora_dict.items():
+            # os.makedirs(os.path.join(output_dir, f'lora_{k}'), exist_ok=True)
+            if self.tokenizer is not None:
+                self.tokenizer.save_pretrained(output_dir)
+            torch.save(self.args, os.path.join(output_dir, TRAINING_ARGS_NAME))
+
+            # safetensors.torch.save_file(
+            #         v, os.path.join(output_dir, f'lora_{k}', "adapter_model.safetensors"), metadata={"format": "pt"}
+            #     )
+            self.model.save_pretrained(
+                 output_dir, state_dict=lora_dict['default'], safe_serialization=self.args.save_safetensors
+            )
+        else:
+            if self.tokenizer is not None:
+                self.tokenizer.save_pretrained(os.path.join(output_dir))
+            torch.save(self.args, os.path.join(output_dir, TRAINING_ARGS_NAME))
+            # safetensors.torch.save_file(
+            #         model_dict, os.path.join(output_dir, "model.safetensors"), metadata={"format": "pt"}
+            #     )
+            self.model.save_pretrained(
+                 output_dir, state_dict=model_dict, safe_serialization=self.args.save_safetensors
+            )

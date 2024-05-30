@@ -35,6 +35,7 @@ _EVAL_CLS = Tuple[ModelArguments, DataArguments, EvaluationArguments, Finetuning
 
 
 def _parse_args(parser: "HfArgumentParser", args: Optional[Dict[str, Any]] = None) -> Tuple[Any]:
+
     if args is not None:
         return parser.parse_dict(args)
 
@@ -61,7 +62,7 @@ def _set_transformers_logging(log_level: Optional[int] = logging.INFO) -> None:
 
 
 def _verify_model_args(model_args: "ModelArguments", finetuning_args: "FinetuningArguments") -> None:
-    if model_args.adapter_name_or_path is not None and finetuning_args.finetuning_type != "lora":
+    if model_args.adapter_name_or_path is not None and (finetuning_args.finetuning_type not in ["lora", "model_lora"]):
         raise ValueError("Adapter is only valid for the LoRA method.")
 
     if model_args.quantization_bit is not None:
