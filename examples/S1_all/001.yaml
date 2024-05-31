@@ -9,21 +9,21 @@ lora_target: q_proj,v_proj
 lora_rank: 8
 
 ### dataset
-dataset: c4_demo
+dataset_dir: ${oc.env:PRETRAIN_DATA_PATH}/S1_all/001
 cutoff_len: 1024
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/olmo/lora_1_pt/
+output_dir: saves/S1_all/001/
 logging_steps: 10
 save_steps: 100
 plot_loss: true
 overwrite_output_dir: true
 
 ### train
-per_device_train_batch_size: 1
+per_device_train_batch_size: 4
 gradient_accumulation_steps: 8
 learning_rate: 0.0001
 num_train_epochs: 1.0
@@ -33,6 +33,8 @@ fp16: true
 
 ### eval
 val_size: 0.1
-per_device_eval_batch_size: 1
+per_device_eval_batch_size: 4
 evaluation_strategy: steps
 eval_steps: 500
+
+report_to: none

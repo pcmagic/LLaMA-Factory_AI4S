@@ -65,13 +65,15 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
     if data_args.dataset_dir == "ONLINE":
         dataset_info = None
     else:
+        ddir = data_args.dataset_dir.split(',')
+
         try:
-            with open(os.path.join(data_args.dataset_dir, DATA_CONFIG), "r") as f:
+            with open(os.path.join(ddir[0], DATA_CONFIG), "r") as f:
                 dataset_info = json.load(f)
         except Exception as err:
             if len(dataset_names) != 0:
                 raise ValueError(
-                    "Cannot open {} due to {}.".format(os.path.join(data_args.dataset_dir, DATA_CONFIG), str(err))
+                    "Cannot open {} due to {}.".format(os.path.join(ddir[0], DATA_CONFIG), str(err))
                 )
             dataset_info = None
 

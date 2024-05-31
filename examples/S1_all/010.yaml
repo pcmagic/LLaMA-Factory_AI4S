@@ -1,38 +1,40 @@
 ### model
-model_name_or_path: pretrain_ckp/ # gemma/
+model_name_or_path: saves/S1_all/100/
 
 ### method
 stage: pt
 do_train: true
-finetuning_type: full
+finetuning_type: lora
+lora_target: q_proj,v_proj
+lora_rank: 8
 
 ### dataset
-# tokenized_path:
-dataset_dir: data/c4_test
-# dataset: c4_demo
+dataset_dir: ${oc.env:PRETRAIN_DATA_PATH}/S1_all/010
 cutoff_len: 1024
 max_samples: 1000
 overwrite_cache: true
 preprocessing_num_workers: 16
 
 ### output
-output_dir: saves/olmo/model_pt/
+output_dir: saves/S1_all/010/
 logging_steps: 10
-save_steps: 500
+save_steps: 1000
 plot_loss: true
 overwrite_output_dir: true
 
 ### train
-per_device_train_batch_size: 1
+per_device_train_batch_size: 4
 gradient_accumulation_steps: 8
 learning_rate: 0.0001
-num_train_epochs: 3.0
+num_train_epochs: 1.0
 lr_scheduler_type: cosine
 warmup_steps: 0.1
 fp16: true
 
 ### eval
 val_size: 0.1
-per_device_eval_batch_size: 1
+per_device_eval_batch_size: 4
 evaluation_strategy: steps
-eval_steps: 500
+eval_steps: 1000
+
+report_to: none

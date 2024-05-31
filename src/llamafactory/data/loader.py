@@ -41,13 +41,16 @@ def load_single_dataset(
         data_dir = dataset_attr.folder
 
     elif dataset_attr.load_from == "script":
-        data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        # data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        data_path = dataset_attr.dataset_name
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
 
     elif dataset_attr.load_from == "file":
         data_files = []
-        local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        # local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        local_path = dataset_attr.dataset_name
+
         if os.path.isdir(local_path):  # is directory
             for file_name in os.listdir(local_path):
                 data_files.append(os.path.join(local_path, file_name))
@@ -130,8 +133,11 @@ def get_dataset(
     if data_args.dataset is None:
         import glob
         import os
-        datalist = [i.split('/')[-1] for i in glob.glob(os.path.join(data_args.dataset_dir, '*'))]
-        datalist.remove('dataset_info.json')
+        ddir = data_args.dataset_dir.split(',')
+        datalist = []
+        for dl in ddir:
+            datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
+            datalist.remove(os.path.join(dl, 'dataset_info.json'))
         data_args.dataset = ','.join(datalist)
 
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
