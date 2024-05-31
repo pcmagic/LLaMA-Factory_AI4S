@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: pretrain_ckp/gemma/
+model_name_or_path: pretrain_ckp/ # gemma/
 
 ### method
 stage: pt
@@ -7,8 +7,9 @@ do_train: true
 finetuning_type: full
 
 ### dataset
-dataset_dir: data
-dataset: c4_demo
+# tokenized_path:
+dataset_dir: data/c4_test
+# dataset: c4_demo
 cutoff_len: 1024
 max_samples: 1000
 overwrite_cache: true

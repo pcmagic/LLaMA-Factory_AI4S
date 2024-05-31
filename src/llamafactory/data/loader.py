@@ -31,6 +31,7 @@ def load_single_dataset(
     dataset_attr: "DatasetAttr",
     model_args: "ModelArguments",
     data_args: "DataArguments",
+    stage: Literal["pt", "sft", "rm", "kto"],
 ) -> Union["Dataset", "IterableDataset"]:
     logger.info("Loading dataset {}...".format(dataset_attr))
     data_path, data_name, data_dir, data_files = None, None, None, None
@@ -55,8 +56,9 @@ def load_single_dataset(
                 elif data_path != FILEEXT2TYPE.get(file_name.split(".")[-1], None):
                     raise ValueError("File types should be identical.")
         elif os.path.isfile(local_path):  # is file
-            data_files.append(local_path)
             data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
+            data_files.append(local_path)
+
         else:
             raise ValueError("File {} not found.".format(local_path))
 
@@ -90,7 +92,6 @@ def load_single_dataset(
             kwargs = {"trust_remote_code": True}
         else:
             kwargs = {}
-
         dataset = load_dataset(
             path=data_path,
             name=data_name,
@@ -102,6 +103,10 @@ def load_single_dataset(
             streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
             **kwargs,
         )
+
+    column_names = list(next(iter(dataset)).keys())
+    if (stage == 'pt') and ('content' in column_names):
+        dataset = dataset.rename_column("content", "text")
 
     if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
         dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
@@ -121,6 +126,14 @@ def get_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> Union["Dataset", "IterableDataset"]:
+
+    if data_args.dataset is None:
+        import glob
+        import os
+        datalist = [i.split('/')[-1] for i in glob.glob(os.path.join(data_args.dataset_dir, '*'))]
+        datalist.remove('dataset_info.json')
+        data_args.dataset = ','.join(datalist)
+
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
@@ -144,7 +157,7 @@ def get_dataset(
             if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
                 raise ValueError("The dataset is not applicable in the current training stage.")
 
-            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args, stage))
         dataset = merge_dataset(all_datasets, data_args, training_args)
 
     with training_args.main_process_first(desc="pre-process dataset"):

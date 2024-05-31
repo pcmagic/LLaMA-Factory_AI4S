@@ -87,7 +87,50 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
             continue
 
         if name not in dataset_info:
-            raise ValueError("Undefined dataset {} in {}.".format(name, DATA_CONFIG))
+            has_hf_url = "hf_hub_url" in dataset_info['data']
+            has_ms_url = "ms_hub_url" in dataset_info['data']
+
+            if has_hf_url or has_ms_url:
+                if (use_modelscope() and has_ms_url) or (not has_hf_url):
+                    dataset_attr = DatasetAttr("ms_hub", dataset_name=dataset_info['data']["ms_hub_url"])
+                else:
+                    dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info['data']["hf_hub_url"])
+            elif "script_url" in dataset_info['data']:
+                dataset_attr = DatasetAttr("script", dataset_name=dataset_info['data']["script_url"])
+            else:
+                dataset_attr = DatasetAttr("file", dataset_name=name)
+
+            dataset_attr.set_attr("subset", dataset_info['data'])
+            dataset_attr.set_attr("folder", dataset_info['data'])
+            dataset_attr.set_attr("ranking", dataset_info['data'], default=False)
+            dataset_attr.set_attr("formatting", dataset_info['data'], default="alpaca")
+            if "columns" in dataset_info['data']:
+                column_names = ["system", "tools", "images", "chosen", "rejected", "kto_tag"]
+                if dataset_attr.formatting == "alpaca":
+                    column_names.extend(["prompt", "query", "response", "history"])
+                else:
+                    column_names.extend(["messages"])
+
+                for column_name in column_names:
+                    dataset_attr.set_attr(column_name, dataset_info['data']["columns"])
+
+            if dataset_attr.formatting == "sharegpt" and "tags" in dataset_info['data']:
+                tag_names = (
+                    "role_tag",
+                    "content_tag",
+                    "user_tag",
+                    "assistant_tag",
+                    "observation_tag",
+                    "function_tag",
+                    "system_tag",
+                )
+                for tag in tag_names:
+                    dataset_attr.set_attr(tag, dataset_info['data']["tags"])
+            dataset_list.append(dataset_attr)
+            continue
+
+
+            # raise ValueError("Undefined dataset {} in {}.".format(name, DATA_CONFIG))
 
         has_hf_url = "hf_hub_url" in dataset_info[name]
         has_ms_url = "ms_hub_url" in dataset_info[name]

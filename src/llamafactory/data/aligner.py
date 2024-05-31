@@ -191,6 +191,7 @@ def align_dataset(
         convert_func = partial(convert_sharegpt, dataset_attr=dataset_attr, data_args=data_args)
 
     column_names = list(next(iter(dataset)).keys())
+
     features = Features.from_dict(
         {
             "prompt": [
