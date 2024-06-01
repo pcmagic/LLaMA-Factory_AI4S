@@ -135,10 +135,15 @@ def get_dataset(
         import os
         ddir = data_args.dataset_dir.split(',')
         datalist = []
+        new_ddir = ''
         for dl in ddir:
+            if dl.startswith('PRETRAIN_DATA_PATH'):
+                dl = os.environ.get('PRETRAIN_DATA_PATH') + dl.replace('PRETRAIN_DATA_PATH','')
+            new_ddir += dl + ','
             datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
             datalist.remove(os.path.join(dl, 'dataset_info.json'))
         data_args.dataset = ','.join(datalist)
+        data_args.dataset_dir = new_ddir
 
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
