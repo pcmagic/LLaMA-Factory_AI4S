@@ -7,14 +7,18 @@ stage: pt
 do_train: true
 finetuning_type: model_lora
 lora_target: q_proj,v_proj
-lora_rank: 8
+lora_rank: 64
 
+ddp_timeout: 180000000
 ### dataset
-dataset_dir: ${oc.env:PRETRAIN_DATA_PATH}/S1_all/101
+tokenized_path: pretrain_token/S1_all/101/
+dataset_dir: data/S1_all/101
+# dataset: c4_demo
 cutoff_len: 1024
-max_samples: 1000
+# max_samples: 1000
 overwrite_cache: true
-preprocessing_num_workers: 16
+preprocessing_num_workers: 128
+# packing: true
 
 ### output
 output_dir: saves/S1_all/101/
@@ -29,11 +33,13 @@ gradient_accumulation_steps: 8
 learning_rate: 0.0001
 num_train_epochs: 1.0
 lr_scheduler_type: cosine
-warmup_steps: 0.1
+warmup_steps: 2000
 fp16: true
 
 ### eval
-val_size: 0.1
+val_size: 0.01
 per_device_eval_batch_size: 4
 evaluation_strategy: steps
-eval_steps: 1000
+eval_steps: 50000
+
+report_to: none

@@ -95,17 +95,20 @@ def load_single_dataset(
             kwargs = {"trust_remote_code": True}
         else:
             kwargs = {}
-        dataset = load_dataset(
-            path=data_path,
-            name=data_name,
-            data_dir=data_dir,
-            data_files=data_files,
-            split=data_args.split,
-            cache_dir=model_args.cache_dir,
-            token=model_args.hf_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
-            **kwargs,
-        )
+        try:
+            dataset = load_dataset(
+                path=data_path,
+                name=data_name,
+                data_dir=data_dir,
+                data_files=data_files,
+                split=data_args.split,
+                cache_dir=model_args.cache_dir,
+                token=model_args.hf_hub_token,
+                streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+                **kwargs,
+            )
+        except:
+            return None
 
     column_names = list(next(iter(dataset)).keys())
     if (stage == 'pt') and ('content' in column_names):
@@ -167,9 +170,12 @@ def get_dataset(
         for dataset_attr in get_dataset_list(data_args):
             if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
                 raise ValueError("The dataset is not applicable in the current training stage.")
-
-            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args, stage))
+            lsd = load_single_dataset(dataset_attr, model_args, data_args, stage)
+            if lsd is None:
+                continue
+            all_datasets.append(lsd)
         dataset = merge_dataset(all_datasets, data_args, training_args)
+        # print(f'Total number of data files: {len(dataset)}')
 
     with training_args.main_process_first(desc="pre-process dataset"):
         preprocess_func, print_function = get_preprocess_and_print_func(
@@ -183,9 +189,9 @@ def get_dataset(
                 load_from_cache_file=(not data_args.overwrite_cache),
                 desc="Running tokenizer on dataset",
             )
-
+        print(f'Total number of data files: {len(dataset)}')
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
-
+        print(f'Total number of data files after tokenizer: {len(dataset)}\n\n\n')
         if data_args.tokenized_path is not None:
             if training_args.should_save:
                 dataset.save_to_disk(data_args.tokenized_path)
