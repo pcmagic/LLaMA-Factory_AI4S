@@ -288,6 +288,7 @@ def init_adapter(
                     model = PeftModel.from_pretrained(
                         model,
                         adapter_to_resume[0],
+                        # adapter_name='0',
                         is_trainable=is_trainable,
                         offload_folder=model_args.offload_folder,
                     )

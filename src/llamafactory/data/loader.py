@@ -133,21 +133,6 @@ def get_dataset(
     processor: Optional["ProcessorMixin"] = None,
 ) -> Union["Dataset", "IterableDataset"]:
 
-    if data_args.dataset is None:
-        import glob
-        import os
-        ddir = data_args.dataset_dir.split(',')
-        datalist = []
-        new_ddir = ''
-        for dl in ddir:
-            if dl.startswith('PRETRAIN_DATA_PATH'):
-                dl = os.environ.get('PRETRAIN_DATA_PATH') + dl.replace('PRETRAIN_DATA_PATH','')
-            new_ddir += dl + ','
-            datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
-            datalist.remove(os.path.join(dl, 'dataset_info.json'))
-        data_args.dataset = ','.join(datalist)
-        data_args.dataset_dir = new_ddir
-
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
@@ -164,7 +149,21 @@ def get_dataset(
 
         if data_args.streaming:
             raise ValueError("Turn off `streaming` when saving dataset to disk.")
-
+    else:
+        if data_args.dataset is None:
+            import glob
+            import os
+            ddir = data_args.dataset_dir.split(',')
+            datalist = []
+            new_ddir = ''
+            for dl in ddir:
+                if dl.startswith('PRETRAIN_DATA_PATH'):
+                    dl = os.environ.get('PRETRAIN_DATA_PATH') + dl.replace('PRETRAIN_DATA_PATH','')
+                new_ddir += dl + ','
+                datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
+                datalist.remove(os.path.join(dl, 'dataset_info.json'))
+            data_args.dataset = ','.join(datalist)
+            data_args.dataset_dir = new_ddir
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
         for dataset_attr in get_dataset_list(data_args):

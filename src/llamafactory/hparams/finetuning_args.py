@@ -327,6 +327,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
     )
+    link_latest: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use latest link for checkpoint."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
