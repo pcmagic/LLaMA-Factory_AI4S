@@ -3,7 +3,7 @@ import os
 import sys
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, concatenate_datasets
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
@@ -139,13 +139,16 @@ def get_dataset(
 
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
-        if has_tokenized_data(data_args.tokenized_path):
-            logger.warning("Loading dataset from disk will ignore other data arguments.")
-            dataset = load_from_disk(data_args.tokenized_path)
-            logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
-            if data_args.streaming:
-                dataset = dataset.to_iterable_dataset()
-            return dataset
+        token_paths = data_args.tokenized_path.split(',')
+        for token_path in token_paths:
+            if has_tokenized_data(token_path):
+                logger.warning("Loading dataset from disk will ignore other data arguments.")
+                dataset = load_from_disk(token_path)
+                logger.info("Loaded tokenized dataset from {}.".format(token_path))
+                if data_args.streaming:
+                    dataset = dataset.to_iterable_dataset()
+                dataset_list.append(dataset)
+        return concatenate_datasets(dataset)
 
         if data_args.streaming:
             raise ValueError("Turn off `streaming` when saving dataset to disk.")
