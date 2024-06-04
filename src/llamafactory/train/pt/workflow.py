@@ -10,8 +10,8 @@ from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
 from ..utils import create_modelcard_and_push
 from .trainer import CustomTrainer
-
-
+from pathlib import Path
+import os
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
@@ -67,12 +67,26 @@ def run_pt(
     # Training
     if training_args.do_train:
         train_result = trainer.train(resume_from_checkpoint=training_args.resume_from_checkpoint)
-        trainer.save_model()
+        output_dir = os.path.join(training_args.output_dir, 'final')
+        os.makedirs(output_dir, exist_ok=True)
+        trainer.save_model(output_dir)
         trainer.log_metrics("train", train_result.metrics)
         trainer.save_metrics("train", train_result.metrics)
         trainer.save_state()
         if trainer.is_world_process_zero() and finetuning_args.plot_loss:
             plot_loss(training_args.output_dir, keys=["loss", "eval_loss"])
+
+        if finetuning_args.link_latest:
+            latest_path = Path(training_args.output_dir) / "latest"
+            latest_path.unlink(missing_ok=True)
+            try:
+                latest_path.symlink_to('final', target_is_directory=True)
+            except FileExistsError:
+                # Same as above, caught when another (file-system) local rank 0 has already made the 'latest' symlink.
+                # This can happen when nodes are saving to a common NFS drive but otherwise have distinct
+                # file-systems.
+                if latest_path.resolve().name != 'final':
+                    raise
 
     # Evaluation
     if training_args.do_eval:
