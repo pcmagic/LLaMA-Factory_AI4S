@@ -152,7 +152,7 @@ class Template:
 
         return encoded_pairs
 
-
+    
 @dataclass
 class Llama2Template(Template):
     def _encode(

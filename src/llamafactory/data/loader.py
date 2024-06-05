@@ -4,7 +4,7 @@ import sys
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, concatenate_datasets
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
@@ -32,6 +32,7 @@ def load_single_dataset(
     dataset_attr: "DatasetAttr",
     model_args: "ModelArguments",
     data_args: "DataArguments",
+    stage: Literal["pt", "sft", "rm", "kto"],
 ) -> Union["Dataset", "IterableDataset"]:
     logger.info("Loading dataset {}...".format(dataset_attr))
     data_path, data_name, data_dir, data_files = None, None, None, None
@@ -41,13 +42,16 @@ def load_single_dataset(
         data_dir = dataset_attr.folder
 
     elif dataset_attr.load_from == "script":
-        data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        # data_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        data_path = dataset_attr.dataset_name
         data_name = dataset_attr.subset
         data_dir = dataset_attr.folder
 
     elif dataset_attr.load_from == "file":
         data_files = []
-        local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        # local_path = os.path.join(data_args.dataset_dir, dataset_attr.dataset_name)
+        local_path = dataset_attr.dataset_name
+
         if os.path.isdir(local_path):  # is directory
             for file_name in os.listdir(local_path):
                 data_files.append(os.path.join(local_path, file_name))
@@ -56,8 +60,9 @@ def load_single_dataset(
                 elif data_path != FILEEXT2TYPE.get(file_name.split(".")[-1], None):
                     raise ValueError("File types should be identical.")
         elif os.path.isfile(local_path):  # is file
-            data_files.append(local_path)
             data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
+            data_files.append(local_path)
+
         else:
             raise ValueError("File {} not found.".format(local_path))
 
@@ -91,18 +96,24 @@ def load_single_dataset(
             kwargs = {"trust_remote_code": True}
         else:
             kwargs = {}
+        try:
+            dataset = load_dataset(
+                path=data_path,
+                name=data_name,
+                data_dir=data_dir,
+                data_files=data_files,
+                split=data_args.split,
+                cache_dir=model_args.cache_dir,
+                token=model_args.hf_hub_token,
+                streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+                **kwargs,
+            )
+        except:
+            return None
 
-        dataset = load_dataset(
-            path=data_path,
-            name=data_name,
-            data_dir=data_dir,
-            data_files=data_files,
-            split=data_args.split,
-            cache_dir=model_args.cache_dir,
-            token=model_args.hf_hub_token,
-            streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
-            **kwargs,
-        )
+    column_names = list(next(iter(dataset)).keys())
+    if (stage == 'pt') and ('content' in column_names):
+        dataset = dataset.rename_column("content", "text")
 
     if data_args.streaming and (dataset_attr.load_from == "file"):  # faster than specifying streaming=True
         dataset = dataset.to_iterable_dataset()  # TODO: add num shards parameter
@@ -134,31 +145,52 @@ def get_dataset(
     tokenizer: "PreTrainedTokenizer",
     processor: Optional["ProcessorMixin"] = None,
 ) -> Union["Dataset", "IterableDataset"]:
+
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
     if data_args.train_on_prompt and template.efficient_eos:
         raise ValueError("Current template does not support `train_on_prompt`.")
 
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
-        if has_tokenized_data(data_args.tokenized_path):
-            logger.warning("Loading dataset from disk will ignore other data arguments.")
-            dataset = load_from_disk(data_args.tokenized_path)
-            logger.info("Loaded tokenized dataset from {}.".format(data_args.tokenized_path))
-            if data_args.streaming:
-                dataset = dataset.to_iterable_dataset()
-            return dataset
+        token_paths = data_args.tokenized_path.split(',')
+        for token_path in token_paths:
+            if has_tokenized_data(token_path):
+                logger.warning("Loading dataset from disk will ignore other data arguments.")
+                dataset = load_from_disk(token_path)
+                logger.info("Loaded tokenized dataset from {}.".format(token_path))
+                if data_args.streaming:
+                    dataset = dataset.to_iterable_dataset()
+                dataset_list.append(dataset)
+        return concatenate_datasets(dataset)
 
         if data_args.streaming:
             raise ValueError("Turn off `streaming` when saving dataset to disk.")
-
+    else:
+        if data_args.dataset is None:
+            import glob
+            import os
+            ddir = data_args.dataset_dir.split(',')
+            datalist = []
+            new_ddir = ''
+            for dl in ddir:
+                if dl.startswith('PRETRAIN_DATA_PATH'):
+                    dl = os.environ.get('PRETRAIN_DATA_PATH') + dl.replace('PRETRAIN_DATA_PATH','')
+                new_ddir += dl + ','
+                datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
+                datalist.remove(os.path.join(dl, 'dataset_info.json'))
+            data_args.dataset = ','.join(datalist)
+            data_args.dataset_dir = new_ddir
     with training_args.main_process_first(desc="load dataset"):
         all_datasets = []
         for dataset_attr in get_dataset_list(data_args):
             if (stage == "rm" and dataset_attr.ranking is False) or (stage != "rm" and dataset_attr.ranking is True):
                 raise ValueError("The dataset is not applicable in the current training stage.")
-
-            all_datasets.append(load_single_dataset(dataset_attr, model_args, data_args))
+            lsd = load_single_dataset(dataset_attr, model_args, data_args, stage)
+            if lsd is None:
+                continue
+            all_datasets.append(lsd)
         dataset = merge_dataset(all_datasets, data_args, training_args)
+        # print(f'Total number of data files: {len(dataset)}')
 
     with training_args.main_process_first(desc="pre-process dataset"):
         preprocess_func, print_function = get_preprocess_and_print_func(
@@ -172,9 +204,9 @@ def get_dataset(
                 load_from_cache_file=(not data_args.overwrite_cache),
                 desc="Running tokenizer on dataset",
             )
-
+        print(f'Total number of data files: {len(dataset)}')
         dataset = dataset.map(preprocess_func, batched=True, remove_columns=column_names, **kwargs)
-
+        print(f'Total number of data files after tokenizer: {len(dataset)}\n\n\n')
         if data_args.tokenized_path is not None:
             if training_args.should_save:
                 dataset.save_to_disk(data_args.tokenized_path)
