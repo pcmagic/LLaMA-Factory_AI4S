@@ -1,3 +1,12 @@
+# user define
+.vscode/
+data/S1_all/
+myconfigs/
+pretrain_ckp/dbg_gemma1.3/
+pretrain_token/*
+wandb/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
