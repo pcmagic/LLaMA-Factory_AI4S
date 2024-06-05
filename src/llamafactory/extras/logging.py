@@ -62,14 +62,14 @@ def get_logger(name: str) -> logging.Logger:
         else os.path.join(logger_path, 'llamafactory_log')
     if not os.path.exists(logger_path):
         os.makedirs(logger_path)
-    logger_name = os.path.join(logger_path, 
+    logger_name = os.path.join(logger_path,
                                f"{name}.log" if not name.endswith('.log') else name)
     file_handler = logging.FileHandler(logger_name)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
 
     logger = logging.getLogger(name)
-    # logger.setLevel(logging.INFO)  # set each log_handler separately. 
+    # logger.setLevel(logging.INFO)  # set each log_handler separately.
     logger.addHandler(stream_handler)
     logger.addHandler(file_handler)
     logger.info("saving log info to file %s" % logger_name)

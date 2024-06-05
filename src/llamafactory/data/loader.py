@@ -153,6 +153,7 @@ def get_dataset(
     # Load tokenized dataset
     if data_args.tokenized_path is not None:
         token_paths = data_args.tokenized_path.split(',')
+        dataset_list = []
         for token_path in token_paths:
             if has_tokenized_data(token_path):
                 logger.warning("Loading dataset from disk will ignore other data arguments.")
@@ -161,7 +162,7 @@ def get_dataset(
                 if data_args.streaming:
                     dataset = dataset.to_iterable_dataset()
                 dataset_list.append(dataset)
-        return concatenate_datasets(dataset)
+        return concatenate_datasets(dataset_list)
 
         if data_args.streaming:
             raise ValueError("Turn off `streaming` when saving dataset to disk.")
