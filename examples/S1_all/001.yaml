@@ -1,5 +1,5 @@
 ### model
-model_name_or_path: saves/olmo/model_lora_0_pt/model/
+model_name_or_path: saves/S1_all/110/latest/model
 
 ### method
 stage: pt
@@ -12,7 +12,7 @@ lora_rank: 64
 ddp_timeout: 180000000
 ### dataset
 tokenized_path: pretrain_token/S1_all//
-dataset_dir: data/S1_all/
+# dataset_dir: data/S1_all/
 # dataset: c4_demo
 cutoff_len: 1024
 # max_samples: 1000
@@ -22,8 +22,9 @@ preprocessing_num_workers: 128
 
 ### output
 output_dir: saves/S1_all/001/
-logging_steps: 10
+logging_steps: 100
 save_steps: 1000
+save_total_limit: 3
 plot_loss: true
 overwrite_output_dir: true
 
@@ -37,7 +38,7 @@ warmup_steps: 2000
 fp16: true
 
 ### eval
-val_size: 0.01
+val_size: 0.001
 per_device_eval_batch_size: 4
 evaluation_strategy: steps
 eval_steps: 50000
