@@ -23,7 +23,7 @@ preprocessing_num_workers: 128
 output_dir: saves/S1_all/010/
 logging_steps: 100
 save_steps: 1000
-save_total_limit: 3
+save_total_limit: 5
 plot_loss: true
 overwrite_output_dir: true
 
