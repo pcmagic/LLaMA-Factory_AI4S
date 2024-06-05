@@ -73,6 +73,10 @@ class LoraArguments:
         default=8,
         metadata={"help": "The intrinsic dimension for LoRA fine-tuning."},
     )
+    lora_num: int = field(
+        default=1,
+        metadata={"help": "The number of LoRA."},
+    )
     lora_target: str = field(
         default="all",
         metadata={
@@ -303,7 +307,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default="sft",
         metadata={"help": "Which stage will be performed in training."},
     )
-    finetuning_type: Literal["lora", "freeze", "full"] = field(
+    finetuning_type: Literal["lora", "freeze", "full", "model_lora"] = field(
         default="lora",
         metadata={"help": "Which fine-tuning method to use."},
     )
@@ -323,6 +327,10 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         default=False,
         metadata={"help": "Whether or not to save the training loss curves."},
     )
+    link_latest: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use latest link for checkpoint."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
@@ -338,7 +346,7 @@ class FinetuningArguments(FreezeArguments, LoraArguments, RLHFArguments, GaloreA
         self.galore_target = split_arg(self.galore_target)
         self.freeze_vision_tower = self.freeze_vision_tower or self.train_mm_proj_only
 
-        assert self.finetuning_type in ["lora", "freeze", "full"], "Invalid fine-tuning method."
+        assert self.finetuning_type in ["lora", "freeze", "full", "model_lora"], "Invalid fine-tuning method."
         assert self.ref_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
         assert self.reward_model_quantization_bit in [None, 8, 4], "We only accept 4-bit or 8-bit quantization."
 

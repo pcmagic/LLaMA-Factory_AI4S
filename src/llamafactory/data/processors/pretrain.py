@@ -17,7 +17,6 @@ def preprocess_pretrain_dataset(
     if not data_args.packing:
         if data_args.template == "gemma":
             text_examples = [tokenizer.bos_token + example for example in text_examples]
-
         result = tokenizer(text_examples, add_special_tokens=False, max_length=data_args.cutoff_len)
     else:
         tokenized_examples = tokenizer(text_examples, add_special_tokens=False)
@@ -32,5 +31,4 @@ def preprocess_pretrain_dataset(
         if data_args.template == "gemma":
             for i in range(len(result["input_ids"])):
                 result["input_ids"][i][0] = tokenizer.bos_token_id
-
     return result
