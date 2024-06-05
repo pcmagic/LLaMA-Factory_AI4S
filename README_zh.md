@@ -28,6 +28,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/ec36a9dd-37f4-4f72-81bd
 选择你的打开方式：
 
 - **Colab**：https://colab.research.google.com/drive/1d5KQtbemerlSDSxZIfAaWXhKr30QypiK?usp=sharing
+- **PAI-DSW**: https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
 - **本地机器**：请见[如何使用](#如何使用)
 
 ## 目录
@@ -345,7 +346,7 @@ cd LLaMA-Factory
 pip install -e .[torch,metrics]
 ```
 
-可选的额外依赖项：torch、metrics、deepspeed、bitsandbytes、vllm、galore、badam、gptq、awq、aqlm、qwen、modelscope、quality
+可选的额外依赖项：torch、torch_npu、metrics、deepspeed、bitsandbytes、vllm、galore、badam、gptq、awq、aqlm、qwen、modelscope、quality
 
 > [!TIP]
 > 遇到包冲突时，可使用 `pip install --no-deps -e .` 解决。
@@ -366,21 +367,35 @@ pip install https://github.com/jllllll/bitsandbytes-windows-webui/releases/downl
 
 加入 [NPU 用户群](assets/wechat_npu.jpg)。
 
-如果使用昇腾 NPU 设备进行（分布式）训练或推理，需要安装 **[torch-npu](https://gitee.com/ascend/pytorch)** 库和 **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**。
+在昇腾 NPU 设备上安装 LLaMA Factory 时，需要指定额外依赖项，使用 `pip install -e .[torch_npu,metrics]` 命令安装。此外，还需要安装 **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**，安装方法请参考[安装教程](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/80RC2alpha002/quickstart/quickstart/quickstart_18_0004.html)或使用以下命令：
 
-| 依赖项       | 至少     | 推荐      |
-| ------------ | ------- | --------- |
-| CANN         | 8.0.RC1 | 8.0.RC1   |
-| torch        | 2.2.0   | 2.2.0     |
-| torch-npu    | 2.2.0   | 2.2.0     |
-| deepspeed    | 0.13.2  | 0.13.2    |
+```bash
+# 请替换 URL 为 CANN 版本和设备型号对应的 URL
+# 安装 CANN Toolkit
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
+bash Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+
+# 安装 CANN Kernels
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+bash Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
+
+# 设置环境变量
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+```
+
+| 依赖项       | 至少     | 推荐        |
+| ------------ | ------- | ----------- |
+| CANN         | 8.0.RC1 | 8.0.RC1     |
+| torch        | 2.1.0   | 2.1.0       |
+| torch-npu    | 2.1.0   | 2.1.0.post3 |
+| deepspeed    | 0.13.2  | 0.13.2      |
 
 Docker 镜像：
 
 - 32GB：[下载地址](http://mirrors.cn-central-221.ovaijisuan.com/detail/130.html)
 - 64GB：[下载地址](http://mirrors.cn-central-221.ovaijisuan.com/detail/131.html)
 
-请记得使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定您使用的设备。
+请使用 `ASCEND_RT_VISIBLE_DEVICES` 而非 `CUDA_VISIBLE_DEVICES` 来指定运算设备。
 
 如果遇到无法正常推理的情况，请尝试设置 `do_sample: false`。
 
@@ -409,9 +424,6 @@ CUDA_VISIBLE_DEVICES=0 llamafactory-cli export examples/merge_lora/llama3_lora_s
 > 使用 `llamafactory-cli help` 显示帮助信息。
 
 ### LLaMA Board 可视化微调（由 [Gradio](https://github.com/gradio-app/gradio) 驱动）
-
-> [!IMPORTANT]
-> LLaMA Board 可视化界面目前仅支持单 GPU 训练。
 
 #### 使用本地环境
 
@@ -472,6 +484,8 @@ export USE_MODELSCOPE_HUB=1 # Windows 使用 `set USE_MODELSCOPE_HUB=1`
 report_to: wandb
 run_name: test_run # 可选
 ```
+
+在启动训练任务时，将 `WANDB_API_KEY` 设置为[密钥](https://wandb.ai/authorize)来登录 W&B 账户。
 
 ## 使用了 LLaMA Factory 的项目
 

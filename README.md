@@ -29,6 +29,7 @@ https://github.com/hiyouga/LLaMA-Factory/assets/16256802/9840a653-7e9c-41c8-ae89
 Choose your path:
 
 - **Colab**: https://colab.research.google.com/drive/1eRTPn37ltBbYsISy9Aw2NuI2Aq5CQrD9?usp=sharing
+- **PAI-DSW**: https://gallery.pai-ml.com/#/preview/deepLearning/nlp/llama_factory
 - **Local machine**: Please refer to [usage](#getting-started)
 
 ## Table of Contents
@@ -346,7 +347,7 @@ cd LLaMA-Factory
 pip install -e .[torch,metrics]
 ```
 
-Extra dependencies available: torch, metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
+Extra dependencies available: torch, torch_npu, metrics, deepspeed, bitsandbytes, vllm, galore, badam, gptq, awq, aqlm, qwen, modelscope, quality
 
 > [!TIP]
 > Use `pip install --no-deps -e .` to resolve package conflicts.
@@ -367,14 +368,28 @@ To enable FlashAttention-2 on the Windows platform, you need to install the prec
 
 Join [NPU user group](assets/wechat_npu.jpg).
 
-To utilize Ascend NPU devices for (distributed) training and inference, you need to install the **[torch-npu](https://gitee.com/ascend/pytorch)** library and the **[Ascend CANN Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**.
+To install LLaMA Factory on Ascend NPU devices, please specify extra dependencies: `pip install -e .[torch_npu,metrics]`. Additionally, you need to install the **[Ascend CANN Toolkit and Kernels](https://www.hiascend.com/developer/download/community/result?module=cann)**. Please follow the [installation tutorial](https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/softwareinstall/instg/atlasdeploy_03_0031.html) or use the following commands:
 
-| Requirement  | Minimum | Recommend |
-| ------------ | ------- | --------- |
-| CANN         | 8.0.RC1 | 8.0.RC1   |
-| torch        | 2.2.0   | 2.2.0     |
-| torch-npu    | 2.2.0   | 2.2.0     |
-| deepspeed    | 0.13.2  | 0.13.2    |
+```bash
+# replace the url according to your CANN version and devices
+# install CANN Toolkit
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run
+bash Ascend-cann-toolkit_8.0.RC1.alpha001_linux-"$(uname -i)".run --install
+
+# install CANN Kernels
+wget https://ascend-repo.obs.cn-east-2.myhuaweicloud.com/Milan-ASL/Milan-ASL%20V100R001C17SPC701/Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run
+bash Ascend-cann-kernels-910b_8.0.RC1.alpha001_linux.run --install
+
+# set env variables
+source /usr/local/Ascend/ascend-toolkit/set_env.sh
+```
+
+| Requirement  | Minimum | Recommend   |
+| ------------ | ------- | ----------- |
+| CANN         | 8.0.RC1 | 8.0.RC1     |
+| torch        | 2.1.0   | 2.1.0       |
+| torch-npu    | 2.1.0   | 2.1.0.post3 |
+| deepspeed    | 0.13.2  | 0.13.2      |
 
 Docker image:
 
@@ -410,9 +425,6 @@ See [examples/README.md](examples/README.md) for advanced usage (including distr
 > Use `llamafactory-cli help` to show help information.
 
 ### Fine-Tuning with LLaMA Board GUI (powered by [Gradio](https://github.com/gradio-app/gradio))
-
-> [!IMPORTANT]
-> LLaMA Board GUI only supports training on a single GPU.
 
 #### Use local environment
 
@@ -467,7 +479,7 @@ export USE_MODELSCOPE_HUB=1 # `set USE_MODELSCOPE_HUB=1` for Windows
 
 Train the model by specifying a model ID of the ModelScope Hub as the `model_name_or_path`. You can find a full list of model IDs at [ModelScope Hub](https://modelscope.cn/models), e.g., `LLM-Research/Meta-Llama-3-8B-Instruct`.
 
-### Use W&B Logging
+### Use W&B Logger
 
 To use [Weights & Biases](https://wandb.ai) for logging experimental results, you need to add the following arguments.
 
@@ -475,6 +487,8 @@ To use [Weights & Biases](https://wandb.ai) for logging experimental results, yo
 report_to: wandb
 run_name: test_run # optional
 ```
+
+Set `WANDB_API_KEY` to [your key](https://wandb.ai/authorize) when launching training tasks to log in with your W&B account.
 
 ## Projects using LLaMA Factory
 
