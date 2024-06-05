@@ -107,6 +107,8 @@ def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
             dataset_attr.set_attr("folder", dataset_info['data'])
             dataset_attr.set_attr("ranking", dataset_info['data'], default=False)
             dataset_attr.set_attr("formatting", dataset_info['data'], default="alpaca")
+            dataset_attr.set_attr("num_samples", dataset_info['data'])
+            
             if "columns" in dataset_info['data']:
                 column_names = ["system", "tools", "images", "chosen", "rejected", "kto_tag"]
                 if dataset_attr.formatting == "alpaca":
