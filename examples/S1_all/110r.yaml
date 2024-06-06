@@ -1,17 +1,19 @@
 ### model
-model_name_or_path: saves/S1_all/110/latest/model
+model_name_or_path: saves/S1_all/100/latest/
+adapter_name_or_path: saves/S1_all/010/latest/
+resume_from_checkpoint: saves/S1_all/110/latest
+
 ### method
 stage: pt
 do_train: true
-finetuning_type: lora
+finetuning_type: model_lora
 lora_target: q_proj,v_proj
 lora_rank: 64
 
-### dataset
 ddp_timeout: 180000000
 ### dataset
-tokenized_path: pretrain_token/S1_all/
-# dataset_dir: data/S1_all/
+tokenized_path: pretrain_token/S1_all/110/
+# dataset_dir: data/S1_all/110
 # dataset: c4_demo
 cutoff_len: 1024
 # max_samples: 1000
@@ -20,7 +22,7 @@ preprocessing_num_workers: 128
 # packing: true
 
 ### output
-output_dir: saves/S1_all/001/
+output_dir: saves/S1_all/110/
 logging_steps: 100
 save_steps: 1000
 save_total_limit: 5

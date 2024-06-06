@@ -1,5 +1,7 @@
 ### model
 model_name_or_path: saves/S1_all/110/latest/model
+resume_from_checkpoint: saves/S1_all/001/latest
+
 ### method
 stage: pt
 do_train: true
