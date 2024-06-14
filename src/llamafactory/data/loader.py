@@ -162,7 +162,7 @@ def get_dataset(
                 if data_args.streaming:
                     dataset = dataset.to_iterable_dataset()
                 dataset_list.append(dataset)
-        return concatenate_datasets(dataset_list)
+        return concatenate_datasets(dataset_list).shuffle(seed=42)
 
         if data_args.streaming:
             raise ValueError("Turn off `streaming` when saving dataset to disk.")
