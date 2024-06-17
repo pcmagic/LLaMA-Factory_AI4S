@@ -4,7 +4,7 @@ import sys
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
-from datasets import load_dataset, load_from_disk, concatenate_datasets
+from datasets import load_dataset, load_from_disk, concatenate_datasets, Dataset
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
@@ -96,20 +96,44 @@ def load_single_dataset(
             kwargs = {"trust_remote_code": True}
         else:
             kwargs = {}
-        try:
-            dataset = load_dataset(
-                path=data_path,
-                name=data_name,
-                data_dir=data_dir,
-                data_files=data_files,
-                split=data_args.split,
-                cache_dir=model_args.cache_dir,
-                token=model_args.hf_hub_token,
-                streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
-                **kwargs,
+
+        dataset = load_dataset(
+            path=data_path,
+            name=data_name,
+            data_dir=data_dir,
+            data_files=data_files,
+            split=data_args.split,
+            cache_dir=model_args.cache_dir,
+            token=model_args.hf_hub_token,
+            # streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+            # streaming=True,
+            # verification_mode="no_checks", 
+            **kwargs,
             )
-        except:
-            return None
+        filtered_data = []  
+        for idx, row in enumerate(dataset):
+            try:
+                filtered_data.append(row)
+            except Exception as e:
+                print(f"Error processing row {idx}: {e}")
+                continue
+        dataset = Dataset.from_list(filtered_data) 
+
+        # try:
+        #     dataset = load_dataset(
+        #         path=data_path,
+        #         name=data_name,
+        #         data_dir=data_dir,
+        #         data_files=data_files,
+        #         split=data_args.split,
+        #         cache_dir=model_args.cache_dir,
+        #         token=model_args.hf_hub_token,
+        #         streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
+        #         **kwargs,
+        #     )
+        # except Exception as e:
+        #     print(e)
+        #     return None
 
     column_names = list(next(iter(dataset)).keys())
     if (stage == 'pt') and ('content' in column_names):

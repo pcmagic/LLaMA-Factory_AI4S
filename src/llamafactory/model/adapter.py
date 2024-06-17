@@ -252,19 +252,19 @@ def init_adapter(
         logger.info(f"Pretraining method: {finetuning_args.finetuning_type}")
         adapter_to_resume = None
         if model_args.adapter_name_or_path is not None:
-            is_mergeable = True
-            if getattr(model, "quantization_method", None):  # merge lora in quantized model is unstable
-                assert len(model_args.adapter_name_or_path) == 1, "Quantized model only accepts a single adapter."
-                is_mergeable = False
+            # is_mergeable = True
+            # if getattr(model, "quantization_method", None):  # merge lora in quantized model is unstable
+            #     assert len(model_args.adapter_name_or_path) == 1, "Quantized model only accepts a single adapter."
+            #     is_mergeable = False
 
-            if is_deepspeed_zero3_enabled():
-                assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
-                is_mergeable = False
+            # if is_deepspeed_zero3_enabled():
+            #     assert len(model_args.adapter_name_or_path) == 1, "Cannot use multiple adapters in DeepSpeed ZeRO-3."
+            #     is_mergeable = False
 
-            if model_args.use_unsloth:
-                assert len(model_args.adapter_name_or_path) == 1, "Unsloth model only accepts a single adapter."
-                is_mergeable = False
-
+            # if model_args.use_unsloth:
+            #     assert len(model_args.adapter_name_or_path) == 1, "Unsloth model only accepts a single adapter."
+            #     is_mergeable = False
+            #     
             # if (is_trainable and not finetuning_args.create_new_adapter) or (not is_mergeable):
             #     adapter_to_merge = model_args.adapter_name_or_path[:-1]
             #     adapter_to_resume = model_args.adapter_name_or_path[-1]
