@@ -9,59 +9,61 @@ from ..hparams import get_train_args
 from .template import get_template_and_fix_tokenizer
 from .loader import *
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from ..extras.constants import FILEEXT2TYPE
 
 from transformers import Seq2SeqTrainingArguments
 
-
+# 下面流程中涉及到的要配置参数
+# model_args = ModelArguments()
+# #tokenizer的配置项
+# model_args.model_name_or_path = ''
+# # model_args.hf_hub_token = ''
+# # model_args.cache_dir = ''
+# # model_args.use_fast_tokenizer = ''
+# # model_args.split_special_tokens = ''
+# # model_args.model_revision = ''
+#
+# #Data的配置项
+# data_args = DataArguments()
+# data_args.dataset_dir = ''
+# data_args.preprocessing_num_workers = 80
+# data_args.tokenized_path = ''
+# # data_args.template = ''
+#
+# #Train的配置项
+# training_args = Seq2SeqTrainingArguments()
+# training_args.seed = 1
 
 def tokenizer_batch(args: Optional[Dict[str, Any]] = None) -> None:
     model_args, data_args, training_args, finetuning_args, generating_args = get_train_args(args)
-    # 下面流程中涉及到的要配置参数
-    # model_args = ModelArguments()
-    # #tokenizer的配置项
-    # model_args.model_name_or_path = ''
-    # # model_args.hf_hub_token = ''
-    # # model_args.cache_dir = ''
-    # # model_args.use_fast_tokenizer = ''
-    # # model_args.split_special_tokens = ''
-    # # model_args.model_revision = ''
-    #
-    # #Data的配置项
-    # data_args = DataArguments()
-    # data_args.dataset_dir = ''
-    # data_args.preprocessing_num_workers = 80
-    # data_args.tokenized_path = ''
-    # # data_args.template = ''
-    #
-    # #Train的配置项
-    # training_args = Seq2SeqTrainingArguments()
-    # training_args.seed = 1
 
-    processor = 64
+
+    processor = data_args.preprocessing_num_workers
 
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args.template)
-
-    ddir = data_args.dataset_dir.split(',')
+    ddir = data_args.dataset_dir
     datalist = []
     new_ddir = ''
     for dl in ddir:
         if dl.startswith('PRETRAIN_DATA_PATH'):
             dl = os.environ.get('PRETRAIN_DATA_PATH') + dl.replace('PRETRAIN_DATA_PATH', '')
         new_ddir += dl + ','
-        datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
-        datalist.remove(os.path.join(dl, 'dataset_info.json'))
-    data_args.dataset = ','.join(datalist)
+        for file_name in glob.glob(os.path.join(dl, '*')):
+            data_type = FILEEXT2TYPE.get(file_name.split(".")[-1], None)
+            if data_type is not None and "dataset_info" not in file_name:
+                datalist.append(file_name)
+    data_args.dataset = datalist
     data_args.dataset_dir = new_ddir
 
     idx = 0
     all_datasets = []
     stage = "pt"
     dataset_attr_array = get_dataset_list(data_args)
-    while idx < len(dataset_attr_array):
-        dataset_attr = dataset_attr_array[idx]
+    for idx, dataset_attr in enumerate(dataset_attr_array):
         lsd = load_single_dataset(dataset_attr, model_args, data_args, stage)
+        print(dataset_attr, lsd)
         if lsd is None:
             continue
         all_datasets.append(lsd)
@@ -87,7 +89,4 @@ def tokenizer_batch(args: Optional[Dict[str, Any]] = None) -> None:
             logger.info(
                 "Please restart the training with `--tokenized_path {}`.".format(data_args.tokenized_path))
             all_datasets = []
-        idx += 1
 
-if __name__ == "__main__":
-    main()

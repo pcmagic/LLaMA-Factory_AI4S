@@ -106,7 +106,7 @@ def load_single_dataset(
             cache_dir=model_args.cache_dir,
             token=model_args.hf_hub_token,
             # streaming=(data_args.streaming and (dataset_attr.load_from != "file")),
-            # streaming=True,
+            streaming=True,
             # verification_mode="no_checks", 
             **kwargs,
             )
