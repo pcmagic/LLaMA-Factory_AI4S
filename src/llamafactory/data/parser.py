@@ -59,7 +59,8 @@ class DatasetAttr:
 
 def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
     if data_args.dataset is not None:
-        dataset_names = [ds.strip() for ds in data_args.dataset.split(",")]
+        # dataset_names = [ds.strip() for ds in data_args.dataset.split(",")]
+        dataset_names = [ds.strip() for ds in data_args.dataset]
     else:
         dataset_names = []
 
