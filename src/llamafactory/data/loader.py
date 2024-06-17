@@ -118,6 +118,7 @@ def load_single_dataset(
                 print(f"Error processing row {idx}: {e}")
                 continue
         dataset = Dataset.from_list(filtered_data) 
+        logger.info("collecting %d rows from %s" % (len(filtered_data), os.path.basename(data_files)))
 
         # try:
         #     dataset = load_dataset(
