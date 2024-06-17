@@ -61,8 +61,8 @@ def check_dependencies() -> None:
     if os.environ.get("DISABLE_VERSION_CHECK", "0").lower() in ["true", "1"]:
         logger.warning("Version checking has been disabled, may lead to unexpected behaviors.")
     else:
-        require_version("transformers>=4.41.2", "To fix: pip install transformers>=4.41.2")
-        require_version("datasets>=2.16.0", "To fix: pip install datasets>=2.16.0")
+        require_version("transformers>=4.40.2", "To fix: pip install transformers>=4.40.2")
+        require_version("datasets>=2.15.0", "To fix: pip install datasets>=2.15.0")
         require_version("accelerate>=0.30.1", "To fix: pip install accelerate>=0.30.1")
         require_version("peft>=0.11.1", "To fix: pip install peft>=0.11.1")
         require_version("trl>=0.8.6", "To fix: pip install trl>=0.8.6")

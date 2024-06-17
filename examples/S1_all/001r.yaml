@@ -1,18 +1,19 @@
 ### model
-model_name_or_path: saves/S1_all/101/latest/model/
-adapter_name_or_path: saves/S1_all/110/latest/,saves/S1_all/101/latest/
+model_name_or_path: saves/S1_all/110/latest/model
+resume_from_checkpoint: saves/S1_all/001/latest
 
 ### method
 stage: pt
 do_train: true
-finetuning_type: model_lora
+finetuning_type: lora
 lora_target: q_proj,v_proj
 lora_rank: 64
 
+### dataset
 ddp_timeout: 180000000
 ### dataset
-tokenized_path: pretrain_token/S1_all/111/
-# dataset_dir: data/S1_all/111
+tokenized_path: pretrain_token/S1_all/
+# dataset_dir: data/S1_all/
 # dataset: c4_demo
 cutoff_len: 1024
 # max_samples: 1000
@@ -21,13 +22,12 @@ preprocessing_num_workers: 128
 # packing: true
 
 ### output
-output_dir: saves/S1_all/111/
+output_dir: saves/S1_all/001/
 logging_steps: 100
 save_steps: 1000
 save_total_limit: 5
 plot_loss: true
-# overwrite_output_dir: true
-save_safetensors: False
+overwrite_output_dir: true
 
 ### train
 per_device_train_batch_size: 4
@@ -44,4 +44,4 @@ per_device_eval_batch_size: 4
 evaluation_strategy: steps
 eval_steps: 50000
 
-report_to: tensorboard
+report_to: none
