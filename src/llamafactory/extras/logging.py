@@ -53,23 +53,24 @@ def get_logger(name: str) -> logging.Logger:
     # 创建一个handler，用于输出到控制台
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
-    stream_handler.setLevel(logging.INFO) # set each log_handler separately.
+    stream_handler.setLevel(logging.INFO)  # set each log_handler separately.
 
     # 创建一个handler，用于写入日志文件
     import os
     logger_path = os.environ.get('OUTPUT_DIR', None)
-    logger_path = os.path.join(os.getcwd(), 'llamafactory_log') if logger_path is None \
-        else os.path.join(logger_path, 'llamafactory_log')
-    if not os.path.exists(logger_path):
-        os.makedirs(logger_path)
+    # logger_path = os.path.join(os.getcwd(), 'llamafactory_log') if logger_path is None \
+    #     else os.path.join(logger_path, 'llamafactory_log')
+    # if not os.path.exists(logger_path):
+    #     os.makedirs(logger_path)
+    logger_path = os.getcwd() if logger_path is None else logger_path
     logger_name = os.path.join(logger_path,
-                               f"{name}.log" if not name.endswith('.log') else name)
+                               "llamafactory.log" if not name.endswith('.log') else name)
     file_handler = logging.FileHandler(logger_name)
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG) # set each log_handler separately.
+    file_handler.setLevel(logging.DEBUG)  # set each log_handler separately.
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO) 
+    logger.setLevel(logging.INFO)
     logger.addHandler(stream_handler)
     logger.addHandler(file_handler)
     logger.info("saving log info to file %s" % logger_name)

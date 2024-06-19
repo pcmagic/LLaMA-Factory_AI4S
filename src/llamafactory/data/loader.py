@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numpy as np
 from datasets import load_dataset, load_from_disk, concatenate_datasets, Dataset
+import concurrent.futures
 
 from ..extras.constants import FILEEXT2TYPE
 from ..extras.logging import get_logger
@@ -35,6 +36,15 @@ def load_single_dataset(
     data_args: "DataArguments",
     stage: Literal["pt", "sft", "rm", "kto"],
 ) -> Union["Dataset", "IterableDataset"]:
+    # Function to process each row and append to filtered_data or handle errors
+    def process_row(idx, row):
+        try:
+            # Process row here (replace with actual processing logic)
+            # For demonstration, I'm simply appending the row to filtered_data
+            filtered_data.append(row)
+        except Exception as e:
+            print(f"Error processing row {idx}: {e}")
+
     logger.info("Loading dataset {}...".format(dataset_attr))
     data_path, data_name, data_dir, data_files = None, None, None, None
     if dataset_attr.load_from in ["hf_hub", "ms_hub"]:
@@ -64,7 +74,6 @@ def load_single_dataset(
         elif os.path.isfile(local_path):  # is file
             data_path = FILEEXT2TYPE.get(local_path.split(".")[-1], None)
             data_files.append(local_path)
-
         else:
             raise ValueError("File {} not found.".format(local_path))
 
@@ -119,12 +128,26 @@ def load_single_dataset(
             **kwargs,
         )
         filtered_data = []
-        for idx, row in enumerate(dataset):
-            try:
-                filtered_data.append(row)
-            except Exception as e:
-                print(f"Error processing row {idx}: {e}")
-                continue
+        # for idx, row in enumerate(dataset):
+        #     try:
+        #         filtered_data.append(row)
+        #     except Exception as e:
+        #         print(f"Error processing row {idx}: {e}")
+        #         continue
+        # Using ThreadPoolExecutor to process rows in parallel
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(process_row, idx, row)
+                       for idx, row in enumerate(dataset)]
+            # Monitor task completion and handle exceptions
+            for future in concurrent.futures.as_completed(futures):
+                # idx = futures[future]
+                try:
+                    # print(future.result())
+                    future.result()  # Check if there's any exception raised during processing
+                except Exception as e:
+                    logger.info(f"Row  generated an exception: {e}")
+            # # # Wait for all tasks to complete
+            # concurrent.futures.wait(futures)
         logger.info("collecting %d rows from %s" %
                     (len(filtered_data), os.path.basename(data_files[0])))
         # dataset = Dataset.from_list(filtered_data)
@@ -211,14 +234,14 @@ def get_dataset(
         if data_args.dataset is None:
             import glob
             import os
-            ddir = data_args.dataset_dir.split(',')
+            ddir = data_args.dataset_dir
             datalist = []
-            new_ddir = ''
+            new_ddir = []
             for dl in ddir:
                 if dl.startswith('PRETRAIN_DATA_PATH'):
                     dl = os.environ.get('PRETRAIN_DATA_PATH') + \
                         dl.replace('PRETRAIN_DATA_PATH', '')
-                new_ddir += dl + ','
+                new_ddir.append(dl)
                 datalist += [i for i in glob.glob(os.path.join(dl, '*'))]
                 datalist.remove(os.path.join(dl, 'dataset_info.json'))
             data_args.dataset = ','.join(datalist)

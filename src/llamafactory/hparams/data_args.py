@@ -18,7 +18,11 @@ class DataArguments:
     )
     dataset_dir: str = field(
         default="data",
-        metadata={"help": "Path to the folder containing the datasets."},
+        metadata={"help": "Path to the folder containing the datasets, conflicts with dataset_file. "},
+    )
+    dataset_file: str = field(
+        default="data",
+        metadata={"help": "Path to the file of the datasets, conflicts with dataset_dir. "},
     )
     split: str = field(
         default="train",

@@ -60,14 +60,14 @@ class DatasetAttr:
 def get_dataset_list(data_args: "DataArguments") -> List["DatasetAttr"]:
     if data_args.dataset is not None:
         # dataset_names = [ds.strip() for ds in data_args.dataset.split(",")]
-        dataset_names = [ds.strip() for ds in data_args.dataset]
+        dataset_names = data_args.dataset
     else:
         dataset_names = []
 
     if data_args.dataset_dir == "ONLINE":
         dataset_info = None
     else:
-        ddir = data_args.dataset_dir.split(',')
+        ddir = data_args.dataset_dir
 
         try:
             with open(os.path.join(ddir[0], DATA_CONFIG), "r") as f:
