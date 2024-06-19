@@ -1,8 +1,8 @@
 # user define
 .vscode/
-data/S1_all/
+data/*
 myconfigs/
-pretrain_ckp/dbg_gemma1.3/
+pretrain_ckp/*
 pretrain_token/*
 wandb/
 
