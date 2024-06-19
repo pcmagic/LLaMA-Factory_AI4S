@@ -11,6 +11,7 @@ from ...model import load_model, load_tokenizer
 from ..utils import create_modelcard_and_push
 from .trainer import CustomTrainer
 from pathlib import Path
+from filelock import FileLock
 import os
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
@@ -78,15 +79,18 @@ def run_pt(
 
         if finetuning_args.link_latest:
             latest_path = Path(training_args.output_dir) / "latest"
-            latest_path.unlink(missing_ok=True)
-            try:
-                latest_path.symlink_to('final', target_is_directory=True)
-            except FileExistsError:
-                # Same as above, caught when another (file-system) local rank 0 has already made the 'latest' symlink.
-                # This can happen when nodes are saving to a common NFS drive but otherwise have distinct
-                # file-systems.
-                if latest_path.resolve().name != 'final':
-                    raise
+            lock_path = latest_path.with_suffix('.lock')
+
+            with FileLock(lock_path): 
+                latest_path.unlink(missing_ok=True)
+                try:
+                    latest_path.symlink_to('final', target_is_directory=True)
+                except FileExistsError:
+                    # Same as above, caught when another (file-system) local rank 0 has already made the 'latest' symlink.
+                    # This can happen when nodes are saving to a common NFS drive but otherwise have distinct
+                    # file-systems.
+                    if latest_path.resolve().name != 'final':
+                        raise
 
     # Evaluation
     if training_args.do_eval:
